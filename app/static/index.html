@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AURA AI</title>
+<style>body{font:16px system-ui;background:#0b1020;color:#eaf0ff;margin:0}main{max-width:760px;margin:7vh auto;padding:24px}h1{font-size:3rem;margin-bottom:4px}p{color:#b8c5df}.card{background:#151d32;border:1px solid #293653;border-radius:18px;padding:22px;margin:18px 0}input,button{font:inherit;border-radius:10px;padding:12px;border:1px solid #34415e;margin:4px}input{background:#0d1425;color:white}button{background:#7c5cff;color:white;cursor:pointer}pre{white-space:pre-wrap;color:#b8ffc9;min-height:1em}.row{display:flex;flex-wrap:wrap}</style></head>
+<body><main><h1>AURA AI</h1><p>A cloud AI platform starter. The default demo runs locally and makes no external AI calls.</p>
+<section class="card"><h2>1. Create an account or sign in</h2><div class="row"><input id="email" type="email" placeholder="Email" autocomplete="email"><input id="password" type="password" placeholder="Password (10+ characters)" autocomplete="current-password"></div><button id="register">Create account</button><button id="login">Sign in</button><pre id="status"></pre></section>
+<section class="card"><h2>2. Chat</h2><form id="chat"><input id="message" placeholder="Type a message" required maxlength="4000"><button>Send</button></form><pre id="reply"></pre></section>
+<p>Interactive API docs: <a href="/docs">/docs</a> · Health: <a href="/health">/health</a></p></main>
+<script>
+let token='';const status=document.querySelector('#status');const email=()=>document.querySelector('#email').value;const password=()=>document.querySelector('#password').value;
+document.querySelector('#register').onclick=async()=>{const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email(),password:password()})});status.textContent=r.ok?'Account created. Now sign in.':(await r.json()).detail||'Could not create account.';};
+document.querySelector('#login').onclick=async()=>{const body=new URLSearchParams({username:email(),password:password()});const r=await fetch('/api/auth/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});const data=await r.json();token=data.access_token||'';status.textContent=token?'Signed in. You can chat now.':(data.detail||'Sign-in failed.');};
+document.querySelector('#chat').onsubmit=async e=>{e.preventDefault();const out=document.querySelector('#reply');if(!token){out.textContent='Please sign in first.';return;}const r=await fetch('/api/chat/stream',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({message:document.querySelector('#message').value})});
+
+if(!r.ok){
+  const data=await r.json().catch(()=>({}));
+  out.textContent=data.detail||'Request failed.';
+  return;
+}
+
+out.textContent='';
+
+const reader=r.body.getReader();
+const decoder=new TextDecoder();
+
+while(true){
+  const {value,done}=await reader.read();
+  if(done) break;
+  out.textContent+=decoder.decode(value,{stream:true});
+}};
+</script></body></html>
