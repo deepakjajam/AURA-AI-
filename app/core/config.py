@@ -12,7 +12,11 @@ class Settings(BaseSettings):
     secret_key: str = secrets.token_urlsafe(48)
     database_url: str = 'sqlite:///./aura.db'
     dev_model_id: str = 'Qwen/Qwen2.5-0.5B-Instruct'
-    inference_backend: str = 'huggingface-dev'
+    inference_backend: str = 'hybrid'
+    aura_mode: str = 'auto'
+    openai_api_key: str = ''
+    aura_api_url: str = ''
+    online_model_id: str = 'aura-online'
 
     @field_validator('secret_key', mode='before')
     @classmethod
